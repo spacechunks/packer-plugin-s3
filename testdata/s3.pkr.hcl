@@ -34,7 +34,13 @@ build {
     access_key = var.access_key
     secret_key = var.secret_key
     endpoint = var.endpoint
-    source = "s3-acc-test/file"
-    destination = "/tmp/file"
+    objects {
+      source      = "s3-acc-test/file1"
+      destination = "/tmp/file1"
+    }
+    objects {
+      source      = "s3-acc-test/file1"
+      destination = "/tmp/file2"
+    }
   }
 }

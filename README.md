@@ -9,9 +9,15 @@ provisioner "s3" {
   access_key = "<my-access-key>"
   secret_key = "<my-secret-key>"
   endpoint = "ams1.vultrobjects.com" // do not include scheme i.e. https://
-  source = "mybucket/myfolder/myobject"
-  destination = "/etc/myobject"
   secure = false // defaults to true
+  objects {
+    source = "mybucket/myfolder/somefile"
+    destination = "/etc/myobject2"
+  }
+  objects {
+    source = "mybucket2/myfolder/somefile"
+    destination = "/etc/myobject2"
+  }
 }
 ```
 

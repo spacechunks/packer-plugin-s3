@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"os"
+	"os/exec"
+	"testing"
+
 	"github.com/freggy/packers3/testdata"
 	"github.com/hashicorp/packer-plugin-sdk/acctest"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"os"
-	"os/exec"
-	"testing"
 )
 
 func TestAccS3Basic(t *testing.T) {

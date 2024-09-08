@@ -13,53 +13,73 @@ func TestSourceFormat(t *testing.T) {
 		{
 			name: "valid source single object",
 			conf: map[string]interface{}{
-				"source":      "bucket/obj",
-				"access_key":  "key",
-				"secret_key":  "key",
-				"endpoint":    "ams1.vultrobjects.com",
-				"destination": "/dest",
+				"objects": []Object{
+					{
+						Source:      "bucket/obj",
+						Destination: "/dest",
+					},
+				},
+				"access_key": "key",
+				"secret_key": "key",
+				"endpoint":   "ams1.vultrobjects.com",
 			},
 		},
 		{
 			name: "valid source nested object",
 			conf: map[string]interface{}{
-				"source":      "bucket/folder/obj",
-				"access_key":  "key",
-				"secret_key":  "key",
-				"endpoint":    "ams1.vultrobjects.com",
-				"destination": "/dest",
+				"objects": []Object{
+					{
+						Source:      "bucket/folder/obj",
+						Destination: "/dest",
+					},
+				},
+				"access_key": "key",
+				"secret_key": "key",
+				"endpoint":   "ams1.vultrobjects.com",
 			},
 		},
 		{
 			name: "missing bucket",
 			conf: map[string]interface{}{
-				"source":      "/obj",
-				"access_key":  "key",
-				"secret_key":  "key",
-				"endpoint":    "ams1.vultrobjects.com",
-				"destination": "/dest",
+				"objects": []Object{
+					{
+						Source:      "/obj",
+						Destination: "/dest",
+					},
+				},
+				"access_key": "key",
+				"secret_key": "key",
+				"endpoint":   "ams1.vultrobjects.com",
 			},
 			shouldErr: true,
 		},
 		{
 			name: "no slashes",
 			conf: map[string]interface{}{
-				"source":      "obj",
-				"access_key":  "key",
-				"secret_key":  "key",
-				"endpoint":    "ams1.vultrobjects.com",
-				"destination": "/dest",
+				"objects": []Object{
+					{
+						Source:      "obj",
+						Destination: "/dest",
+					},
+				},
+				"access_key": "key",
+				"secret_key": "key",
+				"endpoint":   "ams1.vultrobjects.com",
 			},
 			shouldErr: true,
 		},
 		{
 			name: "missing obj",
 			conf: map[string]interface{}{
-				"source":      "obj/",
-				"access_key":  "key",
-				"secret_key":  "key",
-				"endpoint":    "ams1.vultrobjects.com",
-				"destination": "/dest",
+				"objects": []Object{
+					{
+						Source:      "obj/",
+						Destination: "/dest",
+					},
+				},
+				"access_key": "key",
+				"secret_key": "key",
+				"endpoint":   "ams1.vultrobjects.com",
 			},
 			shouldErr: true,
 		},

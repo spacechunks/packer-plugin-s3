@@ -2,30 +2,32 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
+	"strings"
+
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
-	"strings"
 )
 
-//go:generate go run github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc@latest mapstructure-to-hcl2 -type Config
-
-var ErrInvalidSource = errors.New("invalid source: should be in the format of <bucket>/path/to/object")
+//go:generate go run github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc@latest mapstructure-to-hcl2 -type Config,Object
 
 type Config struct {
-	AccessKey   string `mapstructure:"access_key"`
-	SecretKey   string `mapstructure:"secret_key"`
-	Endpoint    string `mapstructure:"endpoint"`
-	Source      string `mapstructure:"source"`
-	Destination string `mapstructure:"destination"`
-	Secure      *bool  `mapstructure:"secure" required:"false"`
+	AccessKey string   `mapstructure:"access_key"`
+	SecretKey string   `mapstructure:"secret_key"`
+	Endpoint  string   `mapstructure:"endpoint"`
+	Objects   []Object `mapstructure:"objects"`
+	Secure    *bool    `mapstructure:"secure" required:"false"`
 
 	ctx interpolate.Context
+}
+
+type Object struct {
+	Source      string `mapstructure:"source"`
+	Destination string `mapstructure:"destination"`
 }
 
 type S3Provisioner struct {
@@ -44,16 +46,22 @@ func (p *S3Provisioner) Prepare(raws ...interface{}) error {
 		return err
 	}
 
-	parts := strings.Split(p.conf.Source, "/")
-	if len(parts) < 2 {
-		return ErrInvalidSource
-	}
+	for _, o := range p.conf.Objects {
+		var (
+			err   = fmt.Errorf("invalid source %s: should be in the format of <bucket>/path/to/object", o.Source)
+			parts = strings.Split(o.Source, "/")
+		)
 
-	// handle the following cases
-	// * /obj
-	// * obj/
-	if parts[0] == "" || parts[1] == "" {
-		return ErrInvalidSource
+		if len(parts) < 2 {
+			return err
+		}
+
+		// handle the following cases
+		// * /obj
+		// * obj/
+		if parts[0] == "" || parts[1] == "" {
+			return err
+		}
 	}
 
 	return nil
@@ -82,16 +90,6 @@ func (p *S3Provisioner) Provision(
 		return fmt.Errorf("error interpolating endpoint: %v", err)
 	}
 
-	src, err := interpolate.Render(p.conf.Source, &p.conf.ctx)
-	if err != nil {
-		return fmt.Errorf("error interpolating source: %v", err)
-	}
-
-	dest, err := interpolate.Render(p.conf.Destination, &p.conf.ctx)
-	if err != nil {
-		return fmt.Errorf("error interpolating destination: %v", err)
-	}
-
 	secure := true
 	if p.conf.Secure != nil {
 		secure = *p.conf.Secure
@@ -105,21 +103,33 @@ func (p *S3Provisioner) Provision(
 		return fmt.Errorf("error creating s3 client: %v", err)
 	}
 
-	var (
-		parts  = strings.Split(src, "/")
-		bucket = parts[0]
-		path   = strings.Join(parts[1:], "/")
-	)
+	for _, o := range p.conf.Objects {
+		src, err := interpolate.Render(o.Source, &p.conf.ctx)
+		if err != nil {
+			return fmt.Errorf("error interpolating source: %v", err)
+		}
 
-	ui.Sayf("retrieving object %s from bucket %s", path, bucket)
+		dest, err := interpolate.Render(o.Destination, &p.conf.ctx)
+		if err != nil {
+			return fmt.Errorf("error interpolating destination: %v", err)
+		}
 
-	obj, err := client.GetObject(ctx, bucket, path, minio.GetObjectOptions{})
-	if err != nil {
-		return fmt.Errorf("error retrieving object %s: %v", path, err)
-	}
+		var (
+			parts  = strings.Split(src, "/")
+			bucket = parts[0]
+			path   = strings.Join(parts[1:], "/")
+		)
 
-	if err := communicator.Upload(dest, obj, nil); err != nil {
-		return fmt.Errorf("error uploading object %s: %v", path, err)
+		ui.Sayf("retrieving object %s from bucket %s", path, bucket)
+
+		obj, err := client.GetObject(ctx, bucket, path, minio.GetObjectOptions{})
+		if err != nil {
+			return fmt.Errorf("error retrieving object %s: %v", path, err)
+		}
+
+		if err := communicator.Upload(dest, obj, nil); err != nil {
+			return fmt.Errorf("error uploading object %s: %v", path, err)
+		}
 	}
 
 	return nil
