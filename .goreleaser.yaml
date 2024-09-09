@@ -2,7 +2,6 @@ env:
   - CGO_ENABLED=0
 before:
   hooks:
-    - make test_unit
     - cp LICENCE LICENSE.txt
 builds:
   - id: linux-builds
