@@ -16,7 +16,7 @@ test_unit:
 	go test
 
 install: $(BIN)
-	packer plugins install --path ./packer-plugin-s3 "github.com/freggy/s3"
+	packer plugins install --path ./packer-plugin-s3 "github.com/spacechunks/s3"
 	rm $(BIN)
 
 $(BIN):
