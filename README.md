@@ -5,6 +5,15 @@ This plugin provides a simple provisioner, that retrieves objects from s3 and st
 **Example**
 
 ```hcl
+packer {
+  required_plugins {
+    s3 = {
+      version = "1.0.0"
+      source = "github.com/spacechunks/s3"
+    }
+  }
+}
+
 provisioner "s3" {
   access_key = "<my-access-key>"
   secret_key = "<my-secret-key>"
