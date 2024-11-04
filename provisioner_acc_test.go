@@ -8,67 +8,118 @@ import (
 	"os/exec"
 	"testing"
 
-	"github.com/freggy/packers3/testdata"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/hashicorp/packer-plugin-sdk/acctest"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
+
+	"github.com/freggy/packers3/testdata"
 )
 
 func TestAccS3Basic(t *testing.T) {
 	var (
-		accessKey = envOrDie(t, "S3_ACC_TEST_ACCESS_KEY")
-		secretKey = envOrDie(t, "S3_ACC_TEST_SECRET_KEY")
-		endpoint  = envOrDie(t, "S3_ACC_TEST_ENDPOINT")
-		ctx       = context.Background()
-		bucket    = "s3-acc-test"
-		objName   = "file"
+		ctx     = context.Background()
+		bucket  = "s3-acc-test"
+		objName = "/dir/file1"
 	)
 
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: true,
-	})
+	cfg, err := awsconfig.LoadDefaultConfig(
+		context.Background(),
+		awsconfig.WithSharedConfigProfile("test"),
+	)
 	if err != nil {
-		t.Fatalf("failed to create s3 client: %v", err)
+		t.Fatalf("failed to load config: %v", err)
 	}
 
-	if err := client.MakeBucket(ctx, bucket, minio.MakeBucketOptions{}); err != nil {
-		t.Fatalf("failed to create s3 bucket: %v", err)
-	}
+	client := s3.NewFromConfig(cfg)
 
-	if _, err := client.PutObject(
-		ctx,
-		bucket,
-		objName,
-		bytes.NewReader([]byte(testdata.Template)),
-		-1,
-		minio.PutObjectOptions{},
-	); err != nil {
-		t.Fatalf("failed to put object: %v", err)
-	}
-
-	tc := &acctest.PluginTestCase{
-		Name:     "s3_basic_test",
-		Template: testdata.Template,
-		Teardown: func() error {
-			if err := client.RemoveObject(ctx, bucket, objName, minio.RemoveObjectOptions{}); err != nil {
-				return fmt.Errorf("failed to remove object: %v", err)
-			}
-			if err := client.RemoveBucket(ctx, bucket); err != nil {
-				return fmt.Errorf("failed to remove bucket: %v", err)
-			}
-			return nil
-		},
-		Check: func(buildCommand *exec.Cmd, logfile string) error {
-			if buildCommand.ProcessState != nil {
-				if buildCommand.ProcessState.ExitCode() != 0 {
-					return fmt.Errorf("bad exit code. logfile: %s", logfile)
+	tests := []*acctest.PluginTestCase{
+		{
+			Name:     "s3_profile_basic_test",
+			Template: testdata.ProfileTemplate,
+			Setup: func() error {
+				if err := setupBucket(ctx, client, bucket, objName); err != nil {
+					return err
 				}
-			}
-			return nil
+				return os.Setenv("AWS_CONFIG_FILE", "testdata/aws_config")
+			},
+			Teardown: func() error {
+				return teardown(ctx, client, bucket, objName)
+			},
+			Check: check,
+		},
+		{
+			Name:     "s3_env_basic_test",
+			Template: testdata.EnvTemplate,
+			Setup: func() error {
+				if err := setupBucket(ctx, client, bucket, objName); err != nil {
+					return err
+				}
+				if err = os.Setenv("AWS_ACCESS_KEY_ID", envOrDie(t, "S3_ACC_TEST_ACCESS_KEY")); err != nil {
+					return err
+				}
+				if err := os.Setenv("AWS_SECRET_ACCESS_KEY", envOrDie(t, "S3_ACC_TEST_SECRET_KEY")); err != nil {
+					return err
+				}
+				if err := os.Setenv("AWS_ENDPOINT_URL", envOrDie(t, "S3_ACC_TEST_ENDPOINT")); err != nil {
+					return err
+				}
+				if err := os.Setenv("AWS_REGION", envOrDie(t, "S3_ACC_TEST_REGION")); err != nil {
+					return err
+				}
+				return nil
+			},
+			Teardown: func() error {
+				return teardown(ctx, client, bucket, objName)
+			},
+			Check: check,
 		},
 	}
-	acctest.TestPlugin(t, tc)
+
+	for _, tc := range tests {
+		acctest.TestPlugin(t, tc)
+	}
+}
+
+func setupBucket(ctx context.Context, client *s3.Client, bucket, obj string) error {
+	if _, err := client.CreateBucket(ctx, &s3.CreateBucketInput{
+		Bucket: &bucket,
+	}); err != nil {
+		return fmt.Errorf("failed to create s3 bucket: %v", err)
+	}
+
+	if _, err := client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket: &bucket,
+		Key:    &obj,
+		Body:   bytes.NewReader([]byte(testdata.ProfileTemplate)),
+	}); err != nil {
+		return fmt.Errorf("failed to put object: %v", err)
+	}
+	return nil
+}
+
+func teardown(ctx context.Context, client *s3.Client, bucket, obj string) error {
+	if _, err := client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: &bucket,
+		Key:    &obj,
+	}); err != nil {
+		return fmt.Errorf("failed to remove object: %v", err)
+	}
+
+	if _, err := client.DeleteBucket(ctx, &s3.DeleteBucketInput{
+		Bucket: &bucket,
+	}); err != nil {
+		return fmt.Errorf("failed to delete bucket: %v", err)
+	}
+	return nil
+}
+
+func check(buildCommand *exec.Cmd, logfile string) error {
+	if buildCommand.ProcessState != nil {
+		if buildCommand.ProcessState.ExitCode() != 0 {
+			return fmt.Errorf("bad exit code. logfile: %s", logfile)
+		}
+	}
+	return nil
 }
 
 func envOrDie(t *testing.T, key string) string {

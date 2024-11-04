@@ -10,11 +10,8 @@ import (
 // FlatConfig is an auto-generated flat version of Config.
 // Where the contents of a field with a `mapstructure:,squash` tag are bubbled up.
 type FlatConfig struct {
-	AccessKey *string      `mapstructure:"access_key" cty:"access_key" hcl:"access_key"`
-	SecretKey *string      `mapstructure:"secret_key" cty:"secret_key" hcl:"secret_key"`
-	Endpoint  *string      `mapstructure:"endpoint" cty:"endpoint" hcl:"endpoint"`
-	Objects   []FlatObject `mapstructure:"objects" cty:"objects" hcl:"objects"`
-	Secure    *bool        `mapstructure:"secure" required:"false" cty:"secure" hcl:"secure"`
+	Profile *string      `mapstructure:"profile" cty:"profile" hcl:"profile"`
+	Objects []FlatObject `mapstructure:"objects" cty:"objects" hcl:"objects"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -29,11 +26,8 @@ func (*Config) FlatMapstructure() interface{ HCL2Spec() map[string]hcldec.Spec }
 // The decoded values from this spec will then be applied to a FlatConfig.
 func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 	s := map[string]hcldec.Spec{
-		"access_key": &hcldec.AttrSpec{Name: "access_key", Type: cty.String, Required: false},
-		"secret_key": &hcldec.AttrSpec{Name: "secret_key", Type: cty.String, Required: false},
-		"endpoint":   &hcldec.AttrSpec{Name: "endpoint", Type: cty.String, Required: false},
-		"objects":    &hcldec.BlockListSpec{TypeName: "objects", Nested: hcldec.ObjectSpec((*FlatObject)(nil).HCL2Spec())},
-		"secure":     &hcldec.AttrSpec{Name: "secure", Type: cty.Bool, Required: false},
+		"profile": &hcldec.AttrSpec{Name: "profile", Type: cty.String, Required: false},
+		"objects": &hcldec.BlockListSpec{TypeName: "objects", Nested: hcldec.ObjectSpec((*FlatObject)(nil).HCL2Spec())},
 	}
 	return s
 }
