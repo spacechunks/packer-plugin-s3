@@ -1,26 +1,28 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/hashicorp/hcl/v2/hcldec"
 	"github.com/hashicorp/packer-plugin-sdk/packer"
 	"github.com/hashicorp/packer-plugin-sdk/template/config"
 	"github.com/hashicorp/packer-plugin-sdk/template/interpolate"
-	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 )
 
 //go:generate go run github.com/hashicorp/packer-plugin-sdk/cmd/packer-sdc@latest mapstructure-to-hcl2 -type Config,Object
 
 type Config struct {
-	AccessKey string   `mapstructure:"access_key"`
-	SecretKey string   `mapstructure:"secret_key"`
-	Endpoint  string   `mapstructure:"endpoint"`
-	Objects   []Object `mapstructure:"objects"`
-	Secure    *bool    `mapstructure:"secure" required:"false"`
+	Profile      string   `mapstructure:"profile"`
+	UsePathStyle bool     `mapstructure:"use_path_style"`
+	Objects      []Object `mapstructure:"objects"`
 
 	ctx interpolate.Context
 }
@@ -75,33 +77,26 @@ func (p *S3Provisioner) Provision(
 ) error {
 	p.conf.ctx.Data = m
 
-	accessKey, err := interpolate.Render(p.conf.AccessKey, &p.conf.ctx)
-	if err != nil {
-		return fmt.Errorf("error interpolating access key: %v", err)
+	var cfg aws.Config
+	if p.conf.Profile != "" {
+		tmp, err := awsconfig.LoadDefaultConfig(
+			context.Background(),
+			awsconfig.WithSharedConfigProfile(p.conf.Profile),
+		)
+		if err != nil {
+			return fmt.Errorf("error loading aws config from profile: %v", err)
+		}
+		cfg = tmp
+	} else {
+		tmp, err := awsconfig.LoadDefaultConfig(ctx)
+		if err != nil {
+			return fmt.Errorf("error loading aws config: %v", err)
+		}
+		cfg = tmp
 	}
 
-	secretKey, err := interpolate.Render(p.conf.SecretKey, &p.conf.ctx)
-	if err != nil {
-		return fmt.Errorf("error interpolating secret key: %v", err)
-	}
-
-	endpoint, err := interpolate.Render(p.conf.Endpoint, &p.conf.ctx)
-	if err != nil {
-		return fmt.Errorf("error interpolating endpoint: %v", err)
-	}
-
-	secure := true
-	if p.conf.Secure != nil {
-		secure = *p.conf.Secure
-	}
-
-	client, err := minio.New(endpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(accessKey, secretKey, ""),
-		Secure: secure,
-	})
-	if err != nil {
-		return fmt.Errorf("error creating s3 client: %v", err)
-	}
+	client := s3.NewFromConfig(cfg)
+	downloader := manager.NewDownloader(s3.NewFromConfig(cfg))
 
 	for _, o := range p.conf.Objects {
 		src, err := interpolate.Render(o.Source, &p.conf.ctx)
@@ -120,14 +115,25 @@ func (p *S3Provisioner) Provision(
 			path   = strings.Join(parts[1:], "/")
 		)
 
-		ui.Sayf("retrieving object %s from bucket %s", path, bucket)
-
-		obj, err := client.GetObject(ctx, bucket, path, minio.GetObjectOptions{})
-		if err != nil {
-			return fmt.Errorf("error retrieving object %s: %v", path, err)
+		// as per spec virtual-hosted-style requests require
+		// a leading / while path-style request don't.
+		if !client.Options().UsePathStyle {
+			path = "/" + path
 		}
 
-		if err := communicator.Upload(dest, obj, nil); err != nil {
+		ui.Sayf("retrieving object %s from bucket %s", path, bucket)
+
+		buf := make([]byte, 0)
+		writeAt := manager.NewWriteAtBuffer(buf)
+
+		if _, err := downloader.Download(ctx, writeAt, &s3.GetObjectInput{
+			Bucket: &bucket,
+			Key:    &path,
+		}); err != nil {
+			return fmt.Errorf("error downloading object %s: %v", path, err)
+		}
+
+		if err := communicator.Upload(dest, bytes.NewReader(buf), nil); err != nil {
 			return fmt.Errorf("error uploading object %s: %v", path, err)
 		}
 	}

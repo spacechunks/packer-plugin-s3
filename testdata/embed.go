@@ -4,5 +4,8 @@ import (
 	_ "embed"
 )
 
-//go:embed s3.pkr.hcl
-var Template string
+//go:embed profile.pkr.hcl
+var ProfileTemplate string
+
+//go:embed env.pkr.hcl
+var EnvTemplate string
