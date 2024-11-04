@@ -15,10 +15,7 @@ packer {
 }
 
 provisioner "s3" {
-  access_key = "<my-access-key>"
-  secret_key = "<my-secret-key>"
-  endpoint = "ams1.vultrobjects.com" // do not include scheme i.e. https://
-  secure = false // defaults to true
+  profile = "<some-profile>" // optional
   objects {
     source = "mybucket/myfolder/somefile"
     destination = "/etc/myobject2"
@@ -28,6 +25,32 @@ provisioner "s3" {
     destination = "/etc/myobject2"
   }
 }
+```
+
+**Configuration**
+
+You can either define credentials in your AWS config file.
+This example uses access and secret keys, but you can also define IAM credentials and SSO.
+
+```
+[profile test]
+aws_access_key_id = my_secret_key
+aws_secret_access_key = my_access_key
+services = services
+region = my_region
+
+[services services]
+s3 =
+  endpoint_url = https://my_endpoint_url
+```
+
+or define them using environment variables
+
+```
+export AWS_ACCESS_KEY_ID=my_secret_key
+export AWS_SECRET_ACCESS_KEY=my_access_key
+export AWS_ENDPOINT_URL=https://my_endpoint_url
+export AWS_REGION=my_region
 ```
 
 ## Development 
