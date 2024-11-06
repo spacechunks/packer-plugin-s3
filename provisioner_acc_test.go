@@ -19,7 +19,7 @@ func TestAccS3Basic(t *testing.T) {
 	var (
 		ctx     = context.Background()
 		bucket  = "s3-acc-test"
-		objName = "/dir/file1"
+		objName = "dir/file1"
 	)
 
 	cfg, err := awsconfig.LoadDefaultConfig(

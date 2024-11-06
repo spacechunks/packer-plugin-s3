@@ -95,7 +95,6 @@ func (p *S3Provisioner) Provision(
 		cfg = tmp
 	}
 
-	client := s3.NewFromConfig(cfg)
 	downloader := manager.NewDownloader(s3.NewFromConfig(cfg))
 
 	for _, o := range p.conf.Objects {
@@ -114,12 +113,6 @@ func (p *S3Provisioner) Provision(
 			bucket = parts[0]
 			path   = strings.Join(parts[1:], "/")
 		)
-
-		// as per spec virtual-hosted-style requests require
-		// a leading / while path-style request don't.
-		if !client.Options().UsePathStyle {
-			path = "/" + path
-		}
 
 		ui.Sayf("retrieving object %s from bucket %s", path, bucket)
 
