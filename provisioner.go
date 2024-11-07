@@ -109,15 +109,13 @@ func (p *S3Provisioner) Provision(
 		}
 
 		var (
-			parts  = strings.Split(src, "/")
-			bucket = parts[0]
-			path   = strings.Join(parts[1:], "/")
+			parts   = strings.Split(src, "/")
+			bucket  = parts[0]
+			path    = strings.Join(parts[1:], "/")
+			writeAt = manager.NewWriteAtBuffer(make([]byte, 0))
 		)
 
 		ui.Sayf("retrieving object %s from bucket %s", path, bucket)
-
-		buf := make([]byte, 0)
-		writeAt := manager.NewWriteAtBuffer(buf)
 
 		if _, err := downloader.Download(ctx, writeAt, &s3.GetObjectInput{
 			Bucket: &bucket,
@@ -126,7 +124,7 @@ func (p *S3Provisioner) Provision(
 			return fmt.Errorf("error downloading object %s: %v", path, err)
 		}
 
-		if err := communicator.Upload(dest, bytes.NewReader(buf), nil); err != nil {
+		if err := communicator.Upload(dest, bytes.NewReader(writeAt.Bytes()), nil); err != nil {
 			return fmt.Errorf("error uploading object %s: %v", path, err)
 		}
 	}
