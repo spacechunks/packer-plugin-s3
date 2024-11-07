@@ -7,6 +7,10 @@ packer {
   }
 }
 
+variable "expected_content" {
+  type = string
+}
+
 source "docker" "test" {
   image = "alpine"
   commit = "true"
@@ -28,5 +32,12 @@ build {
       source      = "s3-acc-test/dir/file1"
       destination = "/tmp/file2"
     }
+  }
+
+  provisioner "shell" {
+    inline = [
+      "[[ $(cat /tmp/file1) == ${var.expected_content} ]] && exit 0 || exit 1",
+      "[[ $(cat /tmp/file2) == ${var.expected_content} ]] && exit 0 || exit 1",
+    ]
   }
 }
