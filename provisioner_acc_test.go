@@ -4,10 +4,11 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"github.com/hashicorp/packer-plugin-sdk/acctest"
 	"os"
 	"os/exec"
 	"testing"
+
+	"github.com/hashicorp/packer-plugin-sdk/acctest"
 
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
