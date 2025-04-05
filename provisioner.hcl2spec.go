@@ -10,8 +10,9 @@ import (
 // FlatConfig is an auto-generated flat version of Config.
 // Where the contents of a field with a `mapstructure:,squash` tag are bubbled up.
 type FlatConfig struct {
-	Profile *string      `mapstructure:"profile" cty:"profile" hcl:"profile"`
-	Objects []FlatObject `mapstructure:"objects" cty:"objects" hcl:"objects"`
+	Profile      *string      `mapstructure:"profile" cty:"profile" hcl:"profile"`
+	UsePathStyle *bool        `mapstructure:"use_path_style" cty:"use_path_style" hcl:"use_path_style"`
+	Objects      []FlatObject `mapstructure:"objects" cty:"objects" hcl:"objects"`
 }
 
 // FlatMapstructure returns a new FlatConfig.
@@ -26,8 +27,9 @@ func (*Config) FlatMapstructure() interface{ HCL2Spec() map[string]hcldec.Spec }
 // The decoded values from this spec will then be applied to a FlatConfig.
 func (*FlatConfig) HCL2Spec() map[string]hcldec.Spec {
 	s := map[string]hcldec.Spec{
-		"profile": &hcldec.AttrSpec{Name: "profile", Type: cty.String, Required: false},
-		"objects": &hcldec.BlockListSpec{TypeName: "objects", Nested: hcldec.ObjectSpec((*FlatObject)(nil).HCL2Spec())},
+		"profile":        &hcldec.AttrSpec{Name: "profile", Type: cty.String, Required: false},
+		"use_path_style": &hcldec.AttrSpec{Name: "use_path_style", Type: cty.Bool, Required: false},
+		"objects":        &hcldec.BlockListSpec{TypeName: "objects", Nested: hcldec.ObjectSpec((*FlatObject)(nil).HCL2Spec())},
 	}
 	return s
 }

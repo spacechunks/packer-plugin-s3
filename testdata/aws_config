@@ -1,9 +1,9 @@
 [profile test]
-aws_access_key_id = ""
-aws_secret_access_key = ""
+aws_access_key_id = "$S3_ACC_TEST_ACCESS_KEY"
+aws_secret_access_key = "$S3_ACC_TEST_SECRET_KEY"
 services = test-services
-region = ""
+region = "$S3_ACC_TEST_REGION"
 
 [services test-services]
 s3 =
-  endpoint_url = ""
+  endpoint_url = "$S3_ACC_TEST_ENDPOINT"

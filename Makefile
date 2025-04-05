@@ -9,11 +9,12 @@ gen:
 
 .PHONY: test_acc
 test_acc:
+	cat ./testdata/aws_config | envsubst > ./testdata/__aws_config
 	PACKER_ACC=1 go test . -run TestAcc
 
 .PHONY: test_unit
 test_unit:
-	go test
+	go test -v -run TestSourceFormat
 
 install: $(BIN)
 	packer plugins install --path ./packer-plugin-s3 "github.com/spacechunks/s3"

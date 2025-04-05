@@ -1,0 +1,33 @@
+name: test-acc
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+permissions:
+  contents: read
+env:
+  S3_ACC_TEST_ACCESS_KEY: ${{ secrets.S3_ACC_TEST_ACCESS_KEY }}
+  S3_ACC_TEST_SECRET_KEY: ${{ secrets.S3_ACC_TEST_SECRET_KEY }}
+  S3_ACC_TEST_ENDPOINT: ${{ secrets.S3_ACC_TEST_ENDPOINT }}
+  S3_ACC_TEST_REGION: ${{ secrets.S3_ACC_TEST_REGION }}
+jobs:
+  test-acc:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: 1.24.1
+      - uses: hashicorp/setup-packer@main
+        with:
+          version: latest
+      - run: make install
+      - run: make test_acc
+      - if: failure()
+        run: |
+          echo "========= packer_log_s3_profile_basic_test.txt ========="
+          [ -f "./packer_log_s3_profile_basic_test.txt" ] && cat ./packer_log_s3_profile_basic_test.txt || exit 0
+          echo "========= packer_log_s3_env_basic_test.txt ========="
+          [ -f "./packer_log_s3_env_basic_test.txt" ] && cat ./packer_log_s3_env_basic_test.txt || exit 0
