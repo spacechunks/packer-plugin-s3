@@ -41,6 +41,7 @@ func TestAccS3Basic(t *testing.T) {
 	tests := []*acctest.PluginTestCase{
 		{
 			Name:     "s3_profile_basic_test",
+			Init:     true,
 			Template: testdata.ProfileTemplate,
 			BuildExtraArgs: []string{
 				fmt.Sprintf("-var=expected_content=%s", content),
@@ -59,6 +60,7 @@ func TestAccS3Basic(t *testing.T) {
 		{
 			Name:     "s3_env_basic_test",
 			Template: testdata.EnvTemplate,
+			Init:     true,
 			BuildExtraArgs: []string{
 				fmt.Sprintf("-var=expected_content=%s", content),
 			},
