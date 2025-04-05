@@ -3,5 +3,9 @@
   "extends": [
     "config:recommended",
     ":disableDependencyDashboard"
+  ],
+  "ignoreDeps": [
+    "github.com/aws/aws-sdk-go-v2/service/s3",
+    "github.com/aws/aws-sdk-go-v2/feature/s3/manager"
   ]
 }

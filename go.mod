@@ -5,8 +5,8 @@ go 1.23.0
 require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.13
-	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.71
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.79.1
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.17.49
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.72.3
 	github.com/hashicorp/hcl/v2 v2.23.0
 	github.com/hashicorp/packer-plugin-sdk v0.6.1
 	github.com/zclconf/go-cty v1.16.2
@@ -85,7 +85,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/shopspring/decimal v1.2.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
-	github.com/stretchr/testify v1.10.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/ugorji/go/codec v1.2.6 // indirect
 	github.com/ulikunitz/xz v0.5.10 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.5 // indirect
