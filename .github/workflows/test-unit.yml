@@ -1,4 +1,4 @@
-name: test-functional
+name: test-unit
 on:
   push:
     branches:
