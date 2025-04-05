@@ -6,6 +6,11 @@ on:
   pull_request:
 permissions:
   contents: read
+env:
+  S3_ACC_TEST_ACCESS_KEY: ${{ secrets.S3_ACC_TEST_ACCESS_KEY }}
+  S3_ACC_TEST_SECRET_KEY: ${{ secrets.S3_ACC_TEST_SECRET_KEY }}
+  S3_ACC_TEST_ENDPOINT: ${{ secrets.S3_ACC_TEST_ENDPOINT }}
+  S3_ACC_TEST_REGION: ${{ secrets.S3_ACC_TEST_REGION }}
 jobs:
   test-acc:
     name: test
