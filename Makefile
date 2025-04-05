@@ -9,6 +9,7 @@ gen:
 
 .PHONY: test_acc
 test_acc:
+	cat ./testdata/aws_config | envsubst > ./testdata/__aws_config
 	PACKER_ACC=1 go test . -run TestAcc
 
 .PHONY: test_unit

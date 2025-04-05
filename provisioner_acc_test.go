@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/packer-plugin-sdk/acctest"
 
@@ -25,7 +26,11 @@ func TestAccS3Basic(t *testing.T) {
 
 	cfg, err := awsconfig.LoadDefaultConfig(
 		context.Background(),
-		awsconfig.WithSharedConfigProfile("test"),
+		func(opts *awsconfig.LoadOptions) error {
+			opts.SharedConfigProfile = "test"
+			opts.SharedConfigFiles = []string{"./testdata/__aws_config"}
+			return nil
+		},
 	)
 	if err != nil {
 		t.Fatalf("failed to load config: %v", err)
@@ -44,7 +49,7 @@ func TestAccS3Basic(t *testing.T) {
 				if err := setupBucket(ctx, client, bucket, objName, content); err != nil {
 					return err
 				}
-				return os.Setenv("AWS_CONFIG_FILE", "testdata/aws_config")
+				return os.Setenv("AWS_CONFIG_FILE", "testdata/__aws_config")
 			},
 			Teardown: func() error {
 				return teardown(ctx, client, bucket, objName)
@@ -117,6 +122,12 @@ func teardown(ctx context.Context, client *s3.Client, bucket, obj string) error 
 	}); err != nil {
 		return fmt.Errorf("failed to delete bucket: %v", err)
 	}
+
+	// some providers (hetzner *cough* cough*) are a bit slow deleting
+	// the bucket from their database. even though the remove call succeeds
+	// creating will fail, due to BucketAlreadyExists. to work around this
+	// we wait a little bit
+	time.Sleep(200 * time.Millisecond)
 	return nil
 }
 

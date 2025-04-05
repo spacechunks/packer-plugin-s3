@@ -1,3 +1,4 @@
 .idea/
 .envrc
 packer-plugin-s3
+__aws_config
