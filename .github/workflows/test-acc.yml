@@ -20,4 +20,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: 1.24.1
-      - run: make test_acc
+      - run: |
+          make test_acc
+          if [ $? == 1 ]; then
+            cat packer_log_s3_profile_basic_test.txt
+            cat packer_log_s3_env_basic_test.txt
+          fi
