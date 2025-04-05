@@ -22,7 +22,5 @@ jobs:
           go-version: 1.24.1
       - run: |
           make test_acc
-          if [ $? -gt 0 ]; then
-            cat packer_log_s3_profile_basic_test.txt
-            cat packer_log_s3_env_basic_test.txt
-          fi
+          cat packer_log_s3_profile_basic_test.txt
+          cat packer_log_s3_env_basic_test.txt
