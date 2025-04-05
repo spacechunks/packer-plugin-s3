@@ -27,5 +27,7 @@ jobs:
       - run: make test_acc
       - if: failure()
         run: |
+          echo "========= packer_log_s3_profile_basic_test.txt ========="
           [ -f "./packer_log_s3_profile_basic_test.txt" ] && cat ./packer_log_s3_profile_basic_test.txt || exit 0
+          echo "========= packer_log_s3_env_basic_test.txt ========="
           [ -f "./packer_log_s3_env_basic_test.txt" ] && cat ./packer_log_s3_env_basic_test.txt || exit 0
