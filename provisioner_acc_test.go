@@ -129,7 +129,7 @@ func teardown(ctx context.Context, client *s3.Client, bucket, obj string) error 
 	// the bucket from their database. even though the remove call succeeds
 	// creating will fail, due to BucketAlreadyExists. to work around this
 	// we wait a little bit
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(1 * time.Second)
 	return nil
 }
 
