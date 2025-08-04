@@ -11,7 +11,7 @@ import (
 func main() {
 	ps := plugin.NewSet()
 	ps.RegisterProvisioner(plugin.DEFAULT_NAME, &S3Provisioner{})
-	ps.SetVersion(version.NewPluginVersion("2.0.7", "", ""))
+	ps.SetVersion(version.NewPluginVersion("2.0.8", "", ""))
 	err := ps.Run()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err.Error())
