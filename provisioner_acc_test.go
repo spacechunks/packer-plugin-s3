@@ -101,6 +101,12 @@ func setupBucket(ctx context.Context, client *s3.Client, bucket, obj, content st
 		return fmt.Errorf("failed to create s3 bucket: %v", err)
 	}
 
+	// some providers (hetzner *cough* cough*) are a bit slow creating
+	// the bucket. even though the create call succeeds
+	// creating will fail, due to NoSuchBucket. to work around this
+	// we wait a little bit
+	time.Sleep(1 * time.Second)
+
 	if _, err := client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: &bucket,
 		Key:    &obj,
