@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/hashicorp/packer-plugin-sdk/acctest"
 
 	awsconfig "github.com/aws/aws-sdk-go-v2/config"
@@ -19,10 +20,12 @@ import (
 func TestAccS3Basic(t *testing.T) {
 	var (
 		ctx     = context.Background()
-		bucket  = "s3-acc-test"
+		bucket  = "s3-acc-test-" + uuid.NewString()
 		objName = "dir/file1"
 		content = "this-is-file-content"
 	)
+
+	fmt.Println("bucket name: ", bucket)
 
 	cfg, err := awsconfig.LoadDefaultConfig(
 		context.Background(),
@@ -45,6 +48,7 @@ func TestAccS3Basic(t *testing.T) {
 			Template: testdata.ProfileTemplate,
 			BuildExtraArgs: []string{
 				fmt.Sprintf("-var=expected_content=%s", content),
+				fmt.Sprintf("-var=bucket=%s", bucket),
 			},
 			Setup: func() error {
 				if err := setupBucket(ctx, client, bucket, objName, content); err != nil {
@@ -63,6 +67,7 @@ func TestAccS3Basic(t *testing.T) {
 			Init:     true,
 			BuildExtraArgs: []string{
 				fmt.Sprintf("-var=expected_content=%s", content),
+				fmt.Sprintf("-var=bucket=%s", bucket),
 			},
 			Setup: func() error {
 				if err := setupBucket(ctx, client, bucket, objName, content); err != nil {

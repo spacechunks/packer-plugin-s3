@@ -11,6 +11,10 @@ variable "expected_content" {
   type = string
 }
 
+variable "bucket" {
+  type = string
+}
+
 source "docker" "test" {
   image = "alpine"
   commit = "true"
@@ -24,11 +28,11 @@ build {
 
   provisioner "s3" {
     objects {
-      source      = "s3-acc-test/dir/file1"
+      source      = "${var.bucket}/dir/file1"
       destination = "/tmp/file1"
     }
     objects {
-      source      = "s3-acc-test/dir/file1"
+      source      = "${var.bucket}/dir/file1"
       destination = "/tmp/file2"
     }
   }
